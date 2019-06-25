@@ -76,7 +76,7 @@ class KNearestNeighbor(object):
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-                dists[i,j] = np.sum(np.square(X[i] - self.X_train[j]))
+                dists[i,j] = np.sum(np.square(self.X_train[j] - X[i]))
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -159,10 +159,14 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             
-            closest_y = self.y_train[np.argsort(dists[i])][:k]
-                
-            # print(closest_indexes)
-            # print(closest_y)
+            fn = np.argsort(dists[i])[:k] // 1000
+            index = np.argsort(dists[i])[:k] % 1000
+
+            for j in range(len(fn)):
+                print(self.y_train)
+                print(fn[j], index[j])
+                closest_y.append(self.y_train[fn[j]][index[j]])
+
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
             # TODO:                                                                 #
