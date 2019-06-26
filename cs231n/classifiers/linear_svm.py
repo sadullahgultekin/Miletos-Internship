@@ -103,7 +103,16 @@ def svm_loss_vectorized(W, X, y, reg):
     # loss.                                                                     #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-   
+    # print(margin.shape) # (500,10)
+    # print(X.T.shape) # (3073,500)
+    margin[margin > 0] = 1
+    valid_margin_count = margin.sum(axis=1)
+    # Subtract in correct class (-s_y)
+    margin[np.arange(num_train),y ] -= valid_margin_count
+    dW = (X.T).dot(margin) / num_train
+
+    # Regularization gradient
+    dW += reg * 2 * W
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
