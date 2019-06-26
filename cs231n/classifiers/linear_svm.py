@@ -80,21 +80,15 @@ def svm_loss_vectorized(W, X, y, reg):
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    
-    print(X.shape)
-    print(W.shape)
-    print(y.shape)
-    
-    
-    
-    
-    
-    
-    
-    # num_classes = W.shape[1]
-    # num_train = X.shape[0]
-    # loss = np.sum(np.matmul(X,W)) / num_train
 
+    num_classes = W.shape[1]
+    num_train = X.shape[0]  
+    scores = np.matmul(X,W)
+    correct_class_scores = scores[np.arange(num_train), y].reshape(num_train,1)
+    margin = np.maximum(scores - correct_class_scores + 1, 0)
+    margin[np.arange(num_train), y] = 0
+    loss = np.sum(margin)/num_train
+   
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     #############################################################################
