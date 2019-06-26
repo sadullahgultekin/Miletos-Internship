@@ -76,7 +76,7 @@ class KNearestNeighbor(object):
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-                dists[i,j] = np.sum(np.square(self.X_train[j] - X[i]))
+                dists[i,j] = np.sqrt(np.sum(np.square(self.X_train[j] - X[i])))
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -98,7 +98,7 @@ class KNearestNeighbor(object):
             # Do not use np.linalg.norm().                                        #
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-            dists[i,:] = np.sum(np.square(self.X_train - X[i]), axis=1)
+            dists[i,:] = np.sqrt(np.sum(np.square(self.X_train - X[i]), axis=1))
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -126,8 +126,9 @@ class KNearestNeighbor(object):
         #       and two broadcast sums.                                         #
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        dists = np.sqrt(np.reshape(np.sum(X**2, axis=1), [num_test,1]) + np.sum(self.X_train**2, axis=1) \
-            - 2 * np.matmul(X, self.X_train.T))
+        test_square = np.sum(X ** 2, axis = 1).reshape(num_test, 1)
+        train_square = np.sum(self.X_train ** 2, axis = 1).reshape(1, num_train)
+        dists = np.sqrt(test_square + train_square - 2 * np.dot(X, self.X_train.T))
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -158,15 +159,9 @@ class KNearestNeighbor(object):
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-            
-            fn = np.argsort(dists[i])[:k] // 1000
-            index = np.argsort(dists[i])[:k] % 1000
-
-            for j in range(len(fn)):
-                print(self.y_train)
-                print(fn[j], index[j])
-                closest_y.append(self.y_train[fn[j]][index[j]])
-
+            index = np.array(np.argsort(dists[i])[:k])
+            closest_y.append(self.y_train[index])
+            closest_y = closest_y[0]
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
             # TODO:                                                                 #
@@ -176,9 +171,7 @@ class KNearestNeighbor(object):
             # label.                                                                #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
             y_pred[i] = np.bincount(closest_y).argmax()
-            
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return y_pred
