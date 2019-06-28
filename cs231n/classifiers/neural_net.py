@@ -79,8 +79,12 @@ class TwoLayerNet(object):
         # shape (N, C).                                                             #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        print(X.shape) # (5, 4)
+        print(W1.shape) # (4, 10)
+        print(W2.shape) # (10, 3)
+        h = X.dot(W1) + b1
+        h = np.maximum(0,h)
+        scores = h.dot(W2) + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
