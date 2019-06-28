@@ -83,8 +83,8 @@ class TwoLayerNet(object):
         # print(W1.shape) # (4, 10)
         # print(W2.shape) # (10, 3)
         h = X.dot(W1) + b1
-        h = np.maximum(0,h)
-        scores = h.dot(W2) + b2
+        X2 = np.maximum(0,h)
+        scores = X2.dot(W2) + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -101,11 +101,11 @@ class TwoLayerNet(object):
         # classifier loss.                                                          #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+
         correct_labels = scores[np.arange(N), y]
         loss = np.sum(-np.log(np.exp(correct_labels) / np.sum(np.exp(scores),axis=1)))
         loss /= N
         loss += reg * (np.sum(W2 * W2) + np.sum( W1 * W1 ))
-        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -117,8 +117,30 @@ class TwoLayerNet(object):
         # grads['W1'] should store the gradient on W1, and be a matrix of same size #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        scores_exp = np.exp(scores)
+        softmax_matrix = scores_exp / np.sum(scores_exp, axis=1, keepdims=True)
+        
+        softmax_matrix[np.arange(N), y] -= 1
+        softmax_matrix /= N
+        
+        dW2 = X2.T.dot(softmax_matrix)
+        
+        db2 = softmax_matrix.sum(axis=0)
+        
+        # W1 gradient
+        dW1 = softmax_matrix.dot(W2.T)  # [NxC] * [CxH] = [NxH]
+        dfc1 = dW1 * (h>0)       # [NxH] . [NxH] = [NxH]
+        dW1 = X.T.dot(dfc1)      # [DxN] * [NxH] = [DxH]
+        
+        # b1 gradient
+        db1 = dfc1.sum(axis=0)
+        
+        # regularization gradient
+        dW1 += reg * 2 * W1
+        dW2 += reg * 2 * W2
+        
+        grads = {'W1':dW1, 'b1':db1, 'W2':dW2, 'b2':db2}
+       
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -163,7 +185,8 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            X_batch = np.
+            y_batch = 
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
