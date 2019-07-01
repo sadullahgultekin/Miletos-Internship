@@ -115,8 +115,7 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    dx = dout* (x > 0)
-    print(dx)
+    dx = dout * (x > 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -195,8 +194,11 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # might prove to be helpful.                                          #
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        # sample_mean, sample_val = np.mean(x), np.var(x)
+        # running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+        # running_var = momentum * running_var + (1 - momentum) * sample_var
+        # print(running_mean)
+        # print(running_var)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
