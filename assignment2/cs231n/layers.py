@@ -26,8 +26,8 @@ def affine_forward(x, w, b):
     # will need to reshape the input into rows.                               #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    
-    out = (x.reshape((x.shape[0],-1)).dot(w)) + b
+
+    out = x.reshape(x.shape[0], -1).dot(w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -199,7 +199,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # running_var = momentum * running_var + (1 - momentum) * sample_var
         # print(running_mean)
         # print(running_var)
-
+        pass
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
         #                           END OF YOUR CODE                          #
