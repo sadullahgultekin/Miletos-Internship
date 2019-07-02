@@ -198,9 +198,9 @@ class FullyConnectedNet(object):
             self.params['W%d' %(i+1)] = np.random.normal(0, weight_scale, (final_dims[i], final_dims[i+1]))
             self.params['b%d' %(i+1)] = np.zeros(final_dims[i+1])
             
-            if normalization != None and i != self.num_layers - 1:
-                self.params['gamma%d' %(i+1)] = np.ones(final_dims[i+1])
-                self.params['beta%d' %(i+1)] = np.zeros(final_dims[i+1])
+            # if normalization != None and i != self.num_layers - 1:
+            #     self.params['gamma%d' %(i+1)] = np.ones(final_dims[i+1])
+            #     self.params['beta%d' %(i+1)] = np.zeros(final_dims[i+1])
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
