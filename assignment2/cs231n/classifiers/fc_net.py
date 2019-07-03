@@ -264,15 +264,18 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         cache, inter_scores = {}, {}
         inter_scores[0] = X
-        
+
         for i in range(1,self.num_layers+1):
             if i == self.num_layers:
                 inter_scores[i], cache[i] = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
             else:
-                xout, af_cache = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
-                x2out, bn_cache = batchnorm_forward(xout, self.params['gamma%d' %i], self.params['beta%d' %i], {'mode': 'train'})
-                score, relu_cache = relu_forward(x2out)
-                inter_scores[i], cache[i] = score, (af_cache, bn_cache, relu_cache)
+                if self.normalization=='batchnorm':
+                    xout, af_cache = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
+                    x2out, bn_cache = batchnorm_forward(xout, self.params['gamma%d' %i], self.params['beta%d' %i], self.bn_params[i-1])
+                    score, relu_cache = relu_forward(x2out)
+                    inter_scores[i], cache[i] = score, (af_cache, bn_cache, relu_cache)
+                else:
+                    inter_scores[i], cache[i] = affine_relu_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
                 
         
         scores = inter_scores[self.num_layers]
@@ -311,11 +314,14 @@ class FullyConnectedNet(object):
             if i == self.num_layers:
                 dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(dscore, cache[i])
             else:
-                af_cache, bn_cache, relu_cache = cache[i]
-                x1 = relu_backward(dscore, relu_cache)
-                x2, grads['gamma%d' %i], grads['beta%d' %i] = batchnorm_backward(x1, bn_cache)
-                dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(x2, af_cache)
-                
+                if self.normalization=='batchnorm':
+                    af_cache, bn_cache, relu_cache = cache[i]
+                    x1 = relu_backward(dscore, relu_cache)
+                    x2, grads['gamma%d' %i], grads['beta%d' %i] = batchnorm_backward(x1, bn_cache)
+                    dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(x2, af_cache)
+                else:
+                    dscore, grads['W%d' %i], grads['b%d' %i] = affine_relu_backward(dscore, cache[i])
+                    
             grads['W%d' %i] += self.reg * self.params['W%d' %i]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

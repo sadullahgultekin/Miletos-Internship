@@ -317,8 +317,16 @@ def batchnorm_backward_alt(dout, cache):
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    
+    N, D = dout.shape
+    xhat, gamma, xmu, ivar, sqrtvar, var, eps = cache
+    
+    dxhat = dout * gamma
+    
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum(dout * xhat, axis=0)
 
-    pass
+    dx = 1.0/N * ivar * (N*dxhat - np.sum(dxhat, axis=0) - xhat*np.sum(dxhat*xhat, axis=0))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -364,7 +372,27 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # Tranpose x to use bath normalization code, now x is of shape (D, N)
+    x = x.T
+
+    # Just copy from batch normalization cdoe
+    mu = np.mean(x, axis=0)
+
+    xmu = x - mu
+    sq = xmu ** 2
+    var = np.var(x, axis=0)
+
+    sqrtvar = np.sqrt(var + eps)
+    ivar = 1./sqrtvar
+    xhat = xmu * ivar
+
+    # Transpose back, now shape of xhat (N, D)
+    xhat = xhat.T
+
+    # Just copy from batch normalization cdoe
+    out = gamma * xhat + beta
+
+    cache = (xhat, gamma, xmu, ivar, sqrtvar, var, eps)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -399,8 +427,28 @@ def layernorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # Just copy code from batch normalization backward
+    xhat, gamma, xmu, ivar, sqrtvar, var, eps = cache
 
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum(xhat*dout, axis=0)
+
+    dxhat = dout * gamma
+
+    # Transpose dxhat and xhat back
+    dxhat = dxhat.T
+    xhat = xhat.T
+
+    # Actually xhat's shape is (D, N), we use notation (N, D) to let us copy
+    # batch normalization backward code when computing dx without change anything
+    N, D = xhat.shape
+
+    # Copy from batch normalization backward code
+    dx = 1.0/N * ivar * (N*dxhat - np.sum(dxhat, axis=0) - xhat*np.sum(dxhat*xhat, axis=0))
+
+    # Transpose dx back
+    dx = dx.T
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
