@@ -194,12 +194,15 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # might prove to be helpful.                                          #
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        
         sample_mean, sample_var = np.mean(x, axis=0), np.var(x, axis=0)
-        norm = (x - sample_mean) / np.sqrt(sample_var)
-        out = gamma * norm + beta
+        sqrtvar = np.sqrt(sample_var + eps)
+        xmu = x - sample_mean
+        normalized = xmu / sqrtvar
+        out = gamma * normalized + beta
         running_mean = momentum * running_mean + (1 - momentum) * sample_mean
         running_var = momentum * running_var + (1 - momentum) * sample_var
+        cache = (normalized, gamma, xmu, 1./sqrtvar, sqrtvar, sample_var, eps)
         
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -216,7 +219,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
         x = (x - running_mean) / np.sqrt(running_var)
         out = gamma * x + beta
-
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
         #                          END OF YOUR CODE                           #
@@ -257,8 +260,31 @@ def batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, D = dout.shape
+    xhat, gamma, xmu, ivar, sqrtvar, var, eps = cache
+    
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum(dout * xhat, axis=0)
 
+    dxhat = dout * gamma
+
+    divar = np.sum(dxhat*xmu, axis=0)
+    dxmu1 = dxhat * ivar
+
+    dsqrtvar = -1. / (sqrtvar**2) * divar
+    dvar = 0.5 * 1. / np.sqrt(var+eps) * dsqrtvar
+
+    dsq = 1. / N * np.ones((N, D)) * dvar
+    dxmu2 = 2 * xmu * dsq
+
+    dx1 = dxmu1 + dxmu2
+
+    dmu = -1 * np.sum(dx1, axis=0)
+
+    dx2 = 1. / N * np.ones((N, D)) * dmu
+
+    dx = dx1 + dx2
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #

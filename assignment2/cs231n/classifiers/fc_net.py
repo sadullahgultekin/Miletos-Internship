@@ -198,9 +198,9 @@ class FullyConnectedNet(object):
             self.params['W%d' %(i+1)] = np.random.normal(0, weight_scale, (final_dims[i], final_dims[i+1]))
             self.params['b%d' %(i+1)] = np.zeros(final_dims[i+1])
             
-            # if normalization != None and i != self.num_layers - 1:
-            #     self.params['gamma%d' %(i+1)] = np.ones(final_dims[i+1])
-            #     self.params['beta%d' %(i+1)] = np.zeros(final_dims[i+1])
+            if normalization == "batchnorm" and i != self.num_layers - 1:
+                self.params['gamma%d' %(i+1)] = np.ones(final_dims[i+1])
+                self.params['beta%d' %(i+1)] = np.zeros(final_dims[i+1])
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -269,7 +269,11 @@ class FullyConnectedNet(object):
             if i == self.num_layers:
                 inter_scores[i], cache[i] = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
             else:
-                inter_scores[i], cache[i] = affine_relu_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
+                xout, af_cache = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
+                x2out, bn_cache = batchnorm_forward(xout, self.params['gamma%d' %i], self.params['beta%d' %i], {'mode': 'train'})
+                score, relu_cache = relu_forward(x2out)
+                inter_scores[i], cache[i] = score, (af_cache, bn_cache, relu_cache)
+                
         
         scores = inter_scores[self.num_layers]
         
@@ -307,7 +311,10 @@ class FullyConnectedNet(object):
             if i == self.num_layers:
                 dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(dscore, cache[i])
             else:
-                dscore, grads['W%d' %i], grads['b%d' %i] = affine_relu_backward(dscore, cache[i])
+                af_cache, bn_cache, relu_cache = cache[i]
+                x1 = relu_backward(dscore, relu_cache)
+                x2, grads['gamma%d' %i], grads['beta%d' %i] = batchnorm_backward(x1, bn_cache)
+                dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(x2, af_cache)
                 
             grads['W%d' %i] += self.reg * self.params['W%d' %i]
 
@@ -317,3 +324,4 @@ class FullyConnectedNet(object):
         ############################################################################
 
         return loss, grads
+
