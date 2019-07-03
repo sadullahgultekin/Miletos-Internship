@@ -264,20 +264,26 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         cache, inter_scores = {}, {}
         inter_scores[0] = X
+        do_cache = None
 
         for i in range(1,self.num_layers+1):
             if i == self.num_layers:
                 inter_scores[i], cache[i] = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
             else:
                 if self.normalization=='batchnorm':
-                    xout, af_cache = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
-                    x2out, bn_cache = batchnorm_forward(xout, self.params['gamma%d' %i], self.params['beta%d' %i], self.bn_params[i-1])
-                    score, relu_cache = relu_forward(x2out)
-                    inter_scores[i], cache[i] = score, (af_cache, bn_cache, relu_cache)
+                    score, af_cache = affine_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
+                    score, bn_cache = batchnorm_forward(score, self.params['gamma%d' %i], self.params['beta%d' %i], self.bn_params[i-1])
+                    score, relu_cache = relu_forward(score)
+                    if self.use_dropout:
+                        score, do_cache = dropout_forward(score, self.dropout_param)
+                    inter_scores[i], cache[i] = score, (af_cache, bn_cache, relu_cache, do_cache)
                 else:
-                    inter_scores[i], cache[i] = affine_relu_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
-                
-        
+                    score, arf_cache = affine_relu_forward(inter_scores[i-1], self.params['W%d' %i], self.params['b%d' %i])
+                    if self.use_dropout:
+                        score, do_cache = dropout_forward(score, self.dropout_param)
+                    inter_scores[i], cache[i] = score, (arf_cache, do_cache)
+                    
+                    
         scores = inter_scores[self.num_layers]
         
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -315,12 +321,18 @@ class FullyConnectedNet(object):
                 dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(dscore, cache[i])
             else:
                 if self.normalization=='batchnorm':
-                    af_cache, bn_cache, relu_cache = cache[i]
-                    x1 = relu_backward(dscore, relu_cache)
-                    x2, grads['gamma%d' %i], grads['beta%d' %i] = batchnorm_backward(x1, bn_cache)
-                    dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(x2, af_cache)
+                    af_cache, bn_cache, relu_cache, do_cache = cache[i]
+                    if self.use_dropout:
+                        dscore = dropout_backward(dscore, do_cache)
+                    dscore = relu_backward(dscore, relu_cache)
+                    dscore, grads['gamma%d' %i], grads['beta%d' %i] = batchnorm_backward(dscore, bn_cache)
+                    dscore, grads['W%d' %i], grads['b%d' %i] = affine_backward(dscore, af_cache)
                 else:
-                    dscore, grads['W%d' %i], grads['b%d' %i] = affine_relu_backward(dscore, cache[i])
+                    arf_cache, do_cache = cache[i]
+                    if self.use_dropout:
+                        dscore = dropout_backward(dscore, do_cache)
+                    dscore, grads['W%d' %i], grads['b%d' %i] = affine_relu_backward(dscore, arf_cache)
+                    
                     
             grads['W%d' %i] += self.reg * self.params['W%d' %i]
 
