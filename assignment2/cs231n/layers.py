@@ -592,15 +592,16 @@ def conv_forward_naive(x, w, b, conv_param):
     F, C, HH, WW = w.shape
     H_out = 1 + (H + 2 * pad - HH) // stride
     W_out = 1 + (W + 2 * pad - WW) // stride
-    out = np.zeros((N,F,H_out, W_out))
-    x_padded = np.pad(x, ((0,0), (0,0), (pad,pad), (pad,pad)), 'constant', constant_values=0)
+    out = np.zeros((N, F, H_out, W_out))
+    
+    x_padded = np.pad(x, ((0,), (0,), (pad,), (pad,)), 'constant', constant_values=0)
 
     for n in range(N):
         for k in range(F):
             for j in range(0,H,stride):
                 for i in range(0,W,stride):
-                    out[n,k,j//2,i//2] = np.sum(x_padded[n,:,j:j+HH,i:i+WW] * w[k]) + b[k]
-                    
+                    out[n,k,j//stride,i//stride] = np.sum(x_padded[n,:,j:j+HH,i:i+WW] * w[k]) + b[k]
+
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -628,8 +629,37 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
-
+    x, w, b, conv_param = cache
+    stride, pad = conv_param['stride'], conv_param['pad']
+    _, _, H_out, W_out = dout.shape
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    
+    x = np.pad(x, ((0,0), (0,0), (pad,pad), (pad,pad)), 'constant', constant_values=0)
+    
+    # Construct output
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+    
+    # print(dout.shape) # (4, 2, 5, 5)
+    # print(b.shape) # (2,)
+    # print(x.shape) # (4, 3, 5, 5)
+    # print(w.shape) # (2, 3, 3, 3)
+    
+    for n in range(N):
+        for f in range(F):
+            db[f] += np.sum(dout[n, f])
+            for j in range(H_out):
+                h_start = j*stride
+                for i in range(W_out):
+                    w_start = i*stride
+                    dx[n,:,h_start:(h_start+HH),w_start:(w_start+WW)] += w[f,:,:,:]*dout[n,f,j,i]
+                    dw[f,:,:,:] += x[n,:,h_start:(h_start+HH),w_start:(w_start+WW)]*dout[n,f,j,i]
+    
+    #db = dout.sum(axis=(0,2,3))     
+    dx = dx[:,:,pad:-pad,pad:-pad]
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
