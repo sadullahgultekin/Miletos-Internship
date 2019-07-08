@@ -142,8 +142,28 @@ class CaptioningRNN(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        h_init, af_cache = affine_forward(features, W_proj, b_proj)
+        
+        we_out, we_cache = word_embedding_forward(captions_in, W_embed)
+        
+        if self.cell_type == "rnn":
+            h, rnnf_cache = rnn_forward(we_out, h_init, Wx, Wh, b)
+        else:
+            pass
+        
+        out, taf_cache = temporal_affine_forward(h, W_vocab, b_vocab)
+        loss, dx = temporal_softmax_loss(out, captions_out, mask)
+        dh, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dx, taf_cache)
+        
+        if self.cell_type == "rnn":
+            dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dh, rnnf_cache)
+        else:
+            pass
+        
+        grads['W_embed'] = word_embedding_backward(dx, we_cache)
+        _, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, af_cache)
+        
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -211,7 +231,19 @@ class CaptioningRNN(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        cur_hidden_state, af_cache = affine_forward(features, W_proj, b_proj)
+        
+        word_embed, cache = word_embedding_forward(self._start, W_embed)
+        
+        for i in range(max_length):
+            if self.cell_type == 'rnn':
+                cur_hidden_state, cache = rnn_step_forward(word_embed, cur_hidden_state, Wx, Wh, b)
+            elif self.cell_type == 'lstm':
+                pass
+        
+            cur_scores, _ = affine_forward(cur_hidden_state, W_vocab, b_vocab)
+            captions[:,i] = np.argmax(cur_scores, axis=1)
+            word_embed, _ = word_embedding_forward(captions[:, i], W_embed)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
