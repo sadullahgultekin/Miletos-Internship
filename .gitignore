@@ -4,4 +4,4 @@
 *.ipynb_checkpoints/*
 
 # gitignore the built release.
-assignment3/*
+assignment3/cs231n/datasets
