@@ -1,5 +1,7 @@
 import random
 import numpy as np
+import torch
+from torch import nn
 
 def __number_sampler(max_digit=3):
     digits = ['0','1','2','3','4','5','6','7','8','9']
@@ -16,8 +18,8 @@ def __operator_sampler():
 def __get_random_sequence(n_input=100, max_len_limit=15, max_digit=3):
     ret = []
     for i in range(n_input):
-        length = random.randint(1,max_len_limit)
-        length = length if length%2==1 else length+1
+        length = random.randint(1,max_len_limit/max_digit)
+        length = length if length%2==1 else length-1
         #length = max_len_limit # added for simplicity, later delete this line to make problem more complicated
         s = ''
         for j in range(length):
@@ -29,7 +31,7 @@ def __get_random_sequence(n_input=100, max_len_limit=15, max_digit=3):
         ret.append(s)
     return ret
 
-def __one_hot_encoding(alphabet, max_len):
+def __one_hot_encoding(alphabet, max_len_limit):
     x = np.zeros((len(alphabet),len(alphabet)),dtype=np.int32)
     dict_ = {}
     for i in range(x.shape[0]):
@@ -37,9 +39,9 @@ def __one_hot_encoding(alphabet, max_len):
         dict_[alphabet[i]] = x[i]
     return dict_
 
-def __create_one_hot_seq(alphabet, max_len, input_sequence):
-    alphabet2encod = __one_hot_encoding(alphabet, max_len)
-    ret = np.zeros((len(input_sequence),max_len,len(alphabet)))
+def __create_one_hot_seq(alphabet, max_len_limit, input_sequence):
+    alphabet2encod = __one_hot_encoding(alphabet, max_len_limit)
+    ret = np.zeros((len(input_sequence),max_len_limit,len(alphabet)))
     for j, inp in enumerate(input_sequence):
         temp = np.zeros((len(inp),len(alphabet)))
         for i in range(temp.shape[0]):
@@ -47,9 +49,9 @@ def __create_one_hot_seq(alphabet, max_len, input_sequence):
         ret[j,:,:] = temp
     return ret
 
-def get_input(n_input=n_input, max_len_limit=max_len_limit, max_digit=1, alphabet):
-    input_sequence = __get_random_sequence(n_input=n_input, max_len_limit=max_len, max_digit=1)
-    one_hot_input = __create_one_hot_seq(alphabet, max_len, input_sequence)
+def get_input(n_input, max_len_limit, max_digit, alphabet):
+    input_sequence = __get_random_sequence(n_input=n_input, max_len_limit=max_len_limit, max_digit=1)
+    one_hot_input = __create_one_hot_seq(alphabet, max_len_limit, input_sequence)
     input_seq = torch.FloatTensor(one_hot_input).permute(1,0,2)
     
     target_values = []
@@ -57,6 +59,5 @@ def get_input(n_input=n_input, max_len_limit=max_len_limit, max_digit=1, alphabe
         target_values.append(eval(input_sequence[i]))
 
     target_values = torch.FloatTensor(target_values).unsqueeze(1)
-    target_values = target_values.to(device)
     
     return input_seq, target_values
