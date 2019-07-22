@@ -7,3 +7,6 @@
 *.pth
 # gitignore the built release.
 assignment3/cs231n/datasets
+
+# data of gan
+gan_from_scratch/data/*
